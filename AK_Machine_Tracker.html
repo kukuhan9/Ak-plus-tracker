@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#0f172a"/>
+<title>AK Machine Tracker</title>
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--card2:#334155;--text:#f1f5f9;--muted:#94a3b8;--accent:#38bdf8;--gold:#fbbf24}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:12px;padding-bottom:80px}
+h1{font-size:1.25rem;font-weight:700}
+.sub{color:var(--muted);font-size:.8rem;margin-top:2px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:14px}
+.lang-btn{background:var(--card2);border:none;color:var(--text);padding:8px 12px;border-radius:10px;font-size:.8rem;cursor:pointer}
+.tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.tab{flex:1;min-width:70px;padding:10px 8px;border:none;border-radius:12px;background:var(--card);color:var(--muted);font-size:.85rem;font-weight:600;cursor:pointer}
+.tab.active{background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff}
+.panel{display:none}.panel.active{display:block}
+.card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:12px}
+label{display:block;font-size:.75rem;color:var(--muted);margin-bottom:4px;margin-top:10px}
+label:first-child{margin-top:0}
+input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--card2);color:var(--text);border-radius:10px;padding:11px 12px;font-size:.95rem}
+textarea{min-height:64px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-row{display:flex;gap:8px;margin-top:14px}
+button.primary{flex:1;border:none;border-radius:12px;padding:12px;font-weight:700;font-size:.95rem;cursor:pointer;background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff}
+button.secondary{flex:1;border:none;border-radius:12px;padding:12px;font-weight:600;font-size:.9rem;cursor:pointer;background:var(--card2);color:var(--text)}
+button.danger{background:#7f1d1d;color:#fecaca;border:none;border-radius:10px;padding:8px 12px;font-size:.8rem;cursor:pointer}
+.chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{background:var(--bg);border:1px solid var(--card2);color:var(--muted);border-radius:999px;padding:6px 10px;font-size:.75rem;cursor:pointer}
+.loc-card{background:var(--card);border-radius:14px;padding:12px 14px;margin-bottom:10px;cursor:pointer}
+.loc-title{font-weight:700;font-size:1rem;display:flex;justify-content:space-between;gap:8px}
+.loc-meta{color:var(--muted);font-size:.78rem;margin-top:4px}
+.badge{display:inline-block;font-size:.7rem;padding:2px 8px;border-radius:999px;background:#0c4a6e;color:var(--accent);font-weight:600}
+.entry{background:var(--bg);border-radius:12px;padding:10px 12px;margin-top:8px;border-left:3px solid var(--accent)}
+.entry.deck-A{border-left-color:#38bdf8}.entry.deck-B{border-left-color:#4ade80}
+.entry.deck-C{border-left-color:#fbbf24}.entry.deck-D{border-left-color:#f472b6}
+.entry-top{display:flex;justify-content:space-between;gap:8px;font-size:.85rem;font-weight:600;flex-wrap:wrap}
+.entry-note{color:#e2e8f0;font-size:.8rem;margin-top:4px}
+.delta{color:var(--gold);font-size:.78rem;margin-top:4px}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{background:var(--bg);border-radius:12px;padding:12px;text-align:center}
+.stat .n{font-size:1.3rem;font-weight:800;color:var(--accent)}
+.stat .l{font-size:.72rem;color:var(--muted);margin-top:2px}
+.empty{text-align:center;color:var(--muted);padding:28px 12px;font-size:.9rem}
+.filter-bar{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.filter-bar select{flex:1;min-width:120px}
+.small{font-size:.78rem}.muted{color:var(--muted)}
+.back-link{background:none;border:none;color:var(--accent);font-size:.85rem;cursor:pointer;margin-bottom:8px;padding:0}
+.export-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.export-row button{flex:1;min-width:100px}
+
+.alert-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.alert{font-size:.72rem;font-weight:600;padding:4px 8px;border-radius:999px}
+.alert-warn{background:#422006;color:#fbbf24;border:1px solid #a16207}
+.alert-c{background:#3b0764;color:#e9d5ff;border:1px solid #7e22ce}
+.alert-ok{background:#0c4a6e;color:#7dd3fc;border:1px solid #0284c8}
+</style>
+</head>
+<body>
+<div class="top"><div><h1 id="appTitle">AK Machine Tracker</h1><div class="sub" id="appSub">Log visits · track refresh speed</div></div>
+<button type="button" class="lang-btn" id="langBtn" onclick="toggleLang()">中文</button></div>
+<div class="tabs">
+<button class="tab active" data-tab="home" onclick="showTab('home')" id="tabHome">Overview</button>
+<button class="tab" data-tab="add" onclick="showTab('add')" id="tabAdd">Add</button>
+<button class="tab" data-tab="list" onclick="showTab('list')" id="tabList">All logs</button>
+<button class="tab" data-tab="data" onclick="showTab('data')" id="tabData">Data</button>
+</div>
+<div class="panel active" id="panel-home">
+<div class="card"><div class="stats-grid">
+<div class="stat"><div class="n" id="statLocs">0</div><div class="l" id="lblLocs">Locations</div></div>
+<div class="stat"><div class="n" id="statMachines">0</div><div class="l" id="lblMachines">Machines</div></div>
+<div class="stat"><div class="n" id="statLogs">0</div><div class="l" id="lblLogs">Log entries</div></div>
+<div class="stat"><div class="n" id="statDays">0</div><div class="l" id="lblDays">Days spanned</div></div>
+</div></div><div id="homeList"></div></div>
+<div class="panel" id="panel-add"><div class="card">
+<label id="lblLoc">Location / Mall</label>
+<input id="fLoc" list="loclist" placeholder="e.g. Pavilion BJ" autocomplete="off"/>
+<datalist id="loclist"></datalist><div class="chip-row" id="locChips"></div>
+<div class="row2"><div><label id="lblMachine">Machine</label>
+<input id="fMachine" list="machlist" placeholder="e.g. 2p / 51" autocomplete="off"/><datalist id="machlist"></datalist></div>
+<div><label id="lblDate">Date</label><input id="fDate" type="date"/></div></div>
+<div class="row2"><div><label id="lblDeck">Deck</label>
+<select id="fDeck"><option value="A">Deck A</option><option value="B">Deck B</option><option value="C">Deck C</option><option value="D">Deck D</option><option value="?">Unknown</option></select></div>
+<div><label id="lblPos">Position(s)</label><input id="fPos" placeholder="e.g. 31 32 or 86" autocomplete="off"/></div></div>
+<label id="lblNote">Note (optional)</label>
+<textarea id="fNote" placeholder="play till 57 / cant scan / left machine..."></textarea>
+<div class="btn-row"><button type="button" class="primary" id="btnSave" onclick="saveEntry()">Save</button>
+<button type="button" class="secondary" id="btnReset" onclick="resetForm()">Reset</button></div>
+<div class="small muted" style="margin-top:8px" id="formHint">Tip: position can be one number or a range like 31 32</div>
+</div></div>
+<div class="panel" id="panel-list"><div class="filter-bar">
+<select id="filterLoc" onchange="renderAllLogs()"></select>
+<select id="filterMachine" onchange="renderAllLogs()"></select></div><div id="allLogs"></div></div>
+<div class="panel" id="panel-data"><div class="card">
+<div style="font-weight:700;margin-bottom:8px" id="dataTitle">Backup</div>
+<div class="small muted" id="dataHelp">Export JSON to keep a copy. Import to restore on another phone.</div>
+<div class="export-row">
+<button type="button" class="secondary" onclick="exportData()" id="btnExport">Export JSON</button>
+<button type="button" class="secondary" onclick="document.getElementById('importFile').click()" id="btnImport">Import JSON</button></div>
+<input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importData(event)"/>
+<div class="export-row"><button type="button" class="danger" onclick="wipeAll()" id="btnWipe">Delete all data</button></div>
+</div></div>
+<div class="panel" id="panel-detail">
+<button type="button" class="back-link" onclick="showTab('home')" id="btnBack">← Back</button>
+<div id="detailBody"></div></div>
+<script>
+const STORAGE_KEY="ak_machine_tracker_v1";
+let lang=localStorage.getItem("ak_tracker_lang")||"en";
+let editingId=null;
+const I18N={
+en:{title:"AK Machine Tracker",sub:"Log visits · track refresh speed",home:"Overview",add:"Add",list:"All logs",data:"Data",locs:"Locations",machines:"Machines",logs:"Log entries",days:"Days spanned",loc:"Location / Mall",machine:"Machine",date:"Date",deck:"Deck",pos:"Position(s)",note:"Note (optional)",save:"Save",reset:"Reset",formHint:"Tip: position can be one number or a range like 31 32",dataTitle:"Backup",dataHelp:"Export JSON to keep a copy. Import to restore on another phone.",export:"Export JSON",import:"Import JSON",wipe:"Delete all data",back:"← Back",empty:"No logs yet. Tap Add to record a visit.",emptyLoc:"No entries for this filter.",cardsMoved:"cards moved",perDay:"/ day",lastSeen:"Last",entries:"entries",needLoc:"Please enter location",needMachine:"Please enter machine",needPos:"Please enter position",saved:"Saved!",confirmWipe:"Delete ALL logs on this device?",confirmDel:"Delete this entry?",allLoc:"All locations",allMach:"All machines",refresh:"Est. refresh",unknown:"Not enough data",langBtn:"中文",hasDeckC:"Deck C here (Ultra zone)",deckEnding:"Deck almost done (≥120)"},
+zh:{title:"AK 机台记录",sub:"记录出卡 · 估算刷新速度",home:"总览",add:"添加",list:"全部记录",data:"数据",locs:"地点",machines:"机台",logs:"记录数",days:"跨天数",loc:"地点 / 商场",machine:"机台",date:"日期",deck:"Deck",pos:"位置",note:"备注（可选）",save:"保存",reset:"重置",formHint:"位置可写单个数字，或范围如 31 32",dataTitle:"备份",dataHelp:"导出 JSON 备份。换手机可导入恢复。",export:"导出 JSON",import:"导入 JSON",wipe:"删除全部数据",back:"← 返回",empty:"还没有记录。点「添加」记下一次出卡。",emptyLoc:"此筛选下没有记录。",cardsMoved:"张卡推进",perDay:"/ 天",lastSeen:"最近",entries:"条",needLoc:"请填写地点",needMachine:"请填写机台",needPos:"请填写位置",saved:"已保存！",confirmWipe:"确定删除本机全部记录？",confirmDel:"删除这条记录？",allLoc:"全部地点",allMach:"全部机台",refresh:"估算刷新",unknown:"数据不足",langBtn:"EN",hasDeckC:"有 Deck C（Ultra 区）",deckEnding:"Deck 快完了（≥120）"}
+};
+function t(k){return (I18N[lang]||I18N.en)[k]||k}
+function load(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")}catch(e){return[]}}
+function save(a){localStorage.setItem(STORAGE_KEY,JSON.stringify(a))}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function parsePos(str){const nums=(str||"").match(/\d+/g);if(!nums||!nums.length)return null;const a=nums.map(Number);return{raw:str.trim(),nums:a,min:Math.min(...a),max:Math.max(...a)}}
+function escapeHtml(s){return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}
+function escapeAttr(s){return String(s||"").replace(/\\/g,"\\\\").replace(/'/g,"\\'")}
+function uniqueSorted(arr){return[...new Set(arr)].sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:"base"}))}
+function todayISO(){const d=new Date();const z=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+z(d.getMonth()+1)+"-"+z(d.getDate())}
+function dayDiff(a,b){return Math.round((new Date(b+"T00:00:00")-new Date(a+"T00:00:00"))/86400000)}
+function cardsAdvanced(prev,next){if(prev.deck!==next.deck||prev.deck==="?")return null;let d=next.posMax-prev.posMax;if(d<0)d+=150;return d}
+function applyLang(){
+const p=I18N[lang]||I18N.en;
+[["appTitle","title"],["appSub","sub"],["tabHome","home"],["tabAdd","add"],["tabList","list"],["tabData","data"],["lblLocs","locs"],["lblMachines","machines"],["lblLogs","logs"],["lblDays","days"],["lblLoc","loc"],["lblMachine","machine"],["lblDate","date"],["lblDeck","deck"],["lblPos","pos"],["lblNote","note"],["btnSave","save"],["btnReset","reset"],["formHint","formHint"],["dataTitle","dataTitle"],["dataHelp","dataHelp"],["btnExport","export"],["btnImport","import"],["btnWipe","wipe"],["btnBack","back"],["langBtn","langBtn"]].forEach(([id,k])=>{const el=document.getElementById(id);if(el)el.textContent=p[k]});
+refreshFilters();renderHome();renderAllLogs();
+}
+function toggleLang(){lang=lang==="en"?"zh":"en";localStorage.setItem("ak_tracker_lang",lang);applyLang()}
+function showTab(name){
+document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+const panel=document.getElementById("panel-"+name);if(panel)panel.classList.add("active");
+const tab=document.querySelector('.tab[data-tab="'+name+'"]');if(tab)tab.classList.add("active");
+if(name==="home")renderHome();if(name==="list")renderAllLogs();if(name==="add"){refreshLocChips();refreshMachList()}
+}
+function resetForm(){editingId=null;document.getElementById("fLoc").value="";document.getElementById("fMachine").value="";document.getElementById("fDate").value=todayISO();document.getElementById("fDeck").value="A";document.getElementById("fPos").value="";document.getElementById("fNote").value="";document.getElementById("btnSave").textContent=t("save")}
+function saveEntry(){
+const loc=document.getElementById("fLoc").value.trim();
+const machine=document.getElementById("fMachine").value.trim();
+const date=document.getElementById("fDate").value;
+const deck=document.getElementById("fDeck").value;
+const pos=parsePos(document.getElementById("fPos").value.trim());
+const note=document.getElementById("fNote").value.trim();
+if(!loc)return alert(t("needLoc"));if(!machine)return alert(t("needMachine"));if(!pos)return alert(t("needPos"));
+const arr=load();
+const entry={id:editingId||uid(),loc,machine,date:date||todayISO(),deck,posRaw:pos.raw,posMin:pos.min,posMax:pos.max,note,updatedAt:Date.now()};
+if(editingId){const i=arr.findIndex(x=>x.id===editingId);if(i>=0)arr[i]=entry;else arr.push(entry)}else arr.push(entry);
+save(arr);resetForm();refreshLocChips();refreshFilters();alert(t("saved"));showTab("home");
+}
+function deleteEntry(id){if(!confirm(t("confirmDel")))return;save(load().filter(x=>x.id!==id));renderHome();renderAllLogs();showTab("home")}
+function refreshLocChips(){
+const locs=uniqueSorted(load().map(x=>x.loc));
+document.getElementById("loclist").innerHTML=locs.map(l=>'<option value="'+escapeHtml(l)+'"></option>').join("");
+document.getElementById("locChips").innerHTML=locs.slice(0,12).map(l=>'<span class="chip" onclick="document.getElementById(\'fLoc\').value=\''+escapeAttr(l)+'\';refreshMachList()">'+escapeHtml(l)+'</span>').join("");
+}
+function refreshMachList(){
+const loc=document.getElementById("fLoc").value.trim();
+const machines=uniqueSorted(load().filter(x=>!loc||x.loc===loc).map(x=>x.machine));
+document.getElementById("machlist").innerHTML=machines.map(m=>'<option value="'+escapeHtml(m)+'"></option>').join("");
+}
+function refreshFilters(){
+const arr=load();const locs=uniqueSorted(arr.map(x=>x.loc));
+const fl=document.getElementById("filterLoc");const curL=fl.value;
+fl.innerHTML='<option value="">'+t("allLoc")+'</option>'+locs.map(l=>'<option value="'+escapeHtml(l)+'">'+escapeHtml(l)+'</option>').join("");
+if(locs.includes(curL))fl.value=curL;
+const locFilter=fl.value;
+const machines=uniqueSorted(arr.filter(x=>!locFilter||x.loc===locFilter).map(x=>x.machine));
+const fm=document.getElementById("filterMachine");const curM=fm.value;
+fm.innerHTML='<option value="">'+t("allMach")+'</option>'+machines.map(m=>'<option value="'+escapeHtml(m)+'">'+escapeHtml(m)+'</option>').join("");
+if(machines.includes(curM))fm.value=curM;
+}
+
+function buildLocAlerts(list){
+  // Latest position per machine+deck
+  const latest={};
+  list.slice().sort((a,b)=>{
+    if(a.date!==b.date)return a.date.localeCompare(b.date);
+    return (a.updatedAt||0)-(b.updatedAt||0);
+  }).forEach(e=>{
+    const k=e.machine+"|"+e.deck;
+    latest[k]=e;
+  });
+  const bits=[];
+  let hasC=false;
+  const nearEnd=[];
+  Object.keys(latest).forEach(k=>{
+    const e=latest[k];
+    if(e.deck==="C") hasC=true;
+    if(e.deck!=="?" && e.posMax>=120){
+      nearEnd.push(e.machine+" Deck "+e.deck+" #"+e.posMax);
+    }
+  });
+  if(hasC) bits.push('<span class="alert alert-c">'+t("hasDeckC")+'</span>');
+  if(nearEnd.length){
+    bits.push('<span class="alert alert-warn">'+t("deckEnding")+': '+escapeHtml(nearEnd.join(", "))+'</span>');
+  }
+  if(!bits.length) return "";
+  return '<div class="alert-row">'+bits.join("")+'</div>';
+}
+
+function renderHome(){
+const arr=load();
+document.getElementById("statLocs").textContent=uniqueSorted(arr.map(x=>x.loc)).length;
+document.getElementById("statMachines").textContent=uniqueSorted(arr.map(x=>x.loc+"/"+x.machine)).length;
+document.getElementById("statLogs").textContent=arr.length;
+let span=0;if(arr.length){const dates=arr.map(x=>x.date).sort();span=Math.max(0,dayDiff(dates[0],dates[dates.length-1]))}
+document.getElementById("statDays").textContent=span;
+const box=document.getElementById("homeList");
+if(!arr.length){box.innerHTML='<div class="empty">'+t("empty")+'</div>';return}
+const byLoc={};arr.forEach(e=>{if(!byLoc[e.loc])byLoc[e.loc]=[];byLoc[e.loc].push(e)});
+const locNames=Object.keys(byLoc).sort((a,b)=>Math.max(...byLoc[b].map(x=>x.updatedAt||0))-Math.max(...byLoc[a].map(x=>x.updatedAt||0)));
+box.innerHTML=locNames.map(loc=>{
+const list=byLoc[loc];const machSet=uniqueSorted(list.map(x=>x.machine));
+const last=list.slice().sort((a,b)=>(b.date+(b.updatedAt||0)).localeCompare(a.date+(a.updatedAt||0)))[0];
+const alerts=buildLocAlerts(list);
+return '<div class="loc-card" onclick="openLocation(\''+escapeAttr(loc)+'\')"><div class="loc-title"><span>'+escapeHtml(loc)+'</span><span class="badge">'+machSet.length+' machine'+(machSet.length>1?'s':'')+'</span></div><div class="loc-meta">'+t("lastSeen")+': '+escapeHtml(last.date)+' · '+list.length+' '+t("entries")+' · '+machSet.map(escapeHtml).join(', ')+'</div>'+(alerts||'')+'</div>';
+}).join("");
+}
+function openLocation(loc){
+const arr=load().filter(x=>x.loc===loc);const byMach={};
+arr.forEach(e=>{if(!byMach[e.machine])byMach[e.machine]=[];byMach[e.machine].push(e)});
+let html='<div class="card"><div style="font-weight:800;font-size:1.1rem">'+escapeHtml(loc)+'</div><div class="small muted">'+arr.length+' '+t("entries")+'</div></div>';
+Object.keys(byMach).sort().forEach(mach=>{
+const logs=byMach[mach].slice().sort((a,b)=>a.date!==b.date?a.date.localeCompare(b.date):(a.updatedAt||0)-(b.updatedAt||0));
+const byDeck={};logs.forEach(l=>{if(!byDeck[l.deck])byDeck[l.deck]=[];byDeck[l.deck].push(l)});
+const refreshBits=[];
+Object.keys(byDeck).forEach(dk=>{
+const seq=byDeck[dk];if(seq.length<2)return;let totalCards=0,totalDays=0;
+for(let i=1;i<seq.length;i++){const adv=cardsAdvanced(seq[i-1],seq[i]);const days=dayDiff(seq[i-1].date,seq[i].date);if(adv!=null&&days>=0){totalCards+=adv;totalDays+=Math.max(days,0)}}
+if(totalCards>0){const rate=totalDays>0?(totalCards/totalDays).toFixed(1):String(totalCards);refreshBits.push('Deck '+dk+': ~'+rate+t("perDay")+' ('+totalCards+' '+t("cardsMoved")+')')}
+});
+const latestByDeck={};logs.forEach(l=>{const prev=latestByDeck[l.deck];if(!prev||l.date>prev.date||(l.date===prev.date&&(l.updatedAt||0)>=(prev.updatedAt||0)))latestByDeck[l.deck]=l});
+let machAlerts='';
+if(latestByDeck["C"]) machAlerts+='<span class="alert alert-c">'+t("hasDeckC")+'</span> ';
+Object.keys(latestByDeck).forEach(dk=>{const e=latestByDeck[dk];if(dk!=="?"&&e.posMax>=120)machAlerts+='<span class="alert alert-warn">Deck '+dk+' #'+e.posMax+' — '+t("deckEnding")+'</span> ';});
+html+='<div class="card"><div style="font-weight:700">'+escapeHtml(mach)+'</div><div class="small muted" style="margin-top:4px">'+(refreshBits.length?t("refresh")+': '+refreshBits.join(' · '):t("unknown"))+'</div>'+(machAlerts?'<div class="alert-row" style="margin-top:6px">'+machAlerts+'</div>':'');
+logs.slice().reverse().forEach(l=>{html+=renderEntryHtml(l,logs)});html+='</div>';
+});
+document.getElementById("detailBody").innerHTML=html;
+document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+document.getElementById("panel-detail").classList.add("active");
+}
+function renderEntryHtml(l,siblings){
+let deltaHtml="";
+if(siblings){
+const same=siblings.filter(x=>x.deck===l.deck&&x.id!==l.id&&(x.date<l.date||(x.date===l.date&&(x.updatedAt||0)<(l.updatedAt||0))));
+same.sort((a,b)=>(b.date+(b.updatedAt||0)).localeCompare(a.date+(a.updatedAt||0)));
+if(same.length){const prev=same[0];const adv=cardsAdvanced(prev,l);const days=dayDiff(prev.date,l.date);
+if(adv!=null)deltaHtml='<div class="delta">vs '+prev.date+' Deck '+prev.deck+' #'+escapeHtml(prev.posRaw)+': +'+adv+' cards'+(days>0?' in '+days+'d (~'+(adv/days).toFixed(1)+'/d)':'')+'</div>'}
+}
+return '<div class="entry deck-'+l.deck+'"><div class="entry-top"><span>'+escapeHtml(l.date)+' · Deck '+escapeHtml(l.deck)+' · #'+escapeHtml(l.posRaw)+'</span><span><button type="button" class="danger" style="padding:4px 8px" onclick="event.stopPropagation();editEntry(\''+l.id+'\')">Edit</button> <button type="button" class="danger" style="padding:4px 8px" onclick="event.stopPropagation();deleteEntry(\''+l.id+'\')">Del</button></span></div>'+(l.note?'<div class="entry-note">'+escapeHtml(l.note)+'</div>':'')+deltaHtml+'</div>';
+}
+function editEntry(id){const e=load().find(x=>x.id===id);if(!e)return;editingId=id;
+document.getElementById("fLoc").value=e.loc;document.getElementById("fMachine").value=e.machine;
+document.getElementById("fDate").value=e.date;document.getElementById("fDeck").value=e.deck;
+document.getElementById("fPos").value=e.posRaw;document.getElementById("fNote").value=e.note||"";
+document.getElementById("btnSave").textContent=t("save")+" ✎";showTab("add")}
+function renderAllLogs(){
+refreshFilters();
+const locF=document.getElementById("filterLoc").value;const machF=document.getElementById("filterMachine").value;
+let arr=load().slice().sort((a,b)=>a.date!==b.date?b.date.localeCompare(a.date):(b.updatedAt||0)-(a.updatedAt||0));
+if(locF)arr=arr.filter(x=>x.loc===locF);if(machF)arr=arr.filter(x=>x.machine===machF);
+const box=document.getElementById("allLogs");
+if(!arr.length){box.innerHTML='<div class="empty">'+t("emptyLoc")+'</div>';return}
+box.innerHTML=arr.map(l=>'<div class="card" style="padding:10px 12px"><div style="font-weight:700;font-size:.9rem">'+escapeHtml(l.loc)+' · '+escapeHtml(l.machine)+'</div>'+renderEntryHtml(l)+'</div>').join("");
+}
+function exportData(){const blob=new Blob([JSON.stringify(load(),null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="ak-machine-tracker-"+todayISO()+".json";a.click();URL.revokeObjectURL(a.href)}
+function importData(ev){const file=ev.target.files&&ev.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=function(){try{const data=JSON.parse(reader.result);if(!Array.isArray(data))throw new Error("bad");const map={};load().forEach(e=>{map[e.id]=e});data.forEach(e=>{if(e&&e.id&&e.loc&&e.machine)map[e.id]=e});save(Object.values(map));applyLang();alert(t("saved"));showTab("home")}catch(err){alert("Import failed")}ev.target.value=""};reader.readAsText(file)}
+function wipeAll(){if(!confirm(t("confirmWipe")))return;save([]);applyLang();showTab("home")}
+document.getElementById("fDate").value=todayISO();
+document.getElementById("fLoc").addEventListener("change",refreshMachList);
+document.getElementById("fLoc").addEventListener("input",refreshMachList);
+applyLang();refreshLocChips();
+</script>
+</body>
+</html>
